@@ -39,10 +39,11 @@ CRITICAL FORMATTING RULES:
 
 def get_db_connection():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="mysql@55", # ⚠️ UPDATE THIS LINE
-        database="coder_chatbot"
+        host=os.getenv("MYSQL_HOST"),
+        port=os.getenv("MYSQL_PORT"),
+        user=os.getenv("MYSQL_USER"),
+        password=os.getenv("MYSQL_PASSWORD"),
+        database="defaultdb" # Aiven's default database name
     )
 
 # ENDPOINT 1: Get all chat threads for the sidebar
