@@ -4,12 +4,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // REPLACE THIS OBJECT WITH YOUR ACTUAL FIREBASE CONFIG
 const firebaseConfig = {
-  apiKey: "your api key",
-  authDomain: "your auth domain",
-  projectId: "your project id",
-  storageBucket: "your storage bucket",
-  messagingSenderId: "your id",
-  appId: "your app id"
+  apiKey: "your_api_key",
+  authDomain: "your_auth_domain",
+  projectId: "your_project_id",
+  storageBucket: "your_storage_bucket",
+  messagingSenderId: "your_id",
+  appId: "your_app_id"
 };
 
 const app = initializeApp(firebaseConfig);
