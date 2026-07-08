@@ -4,12 +4,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // REPLACE THIS OBJECT WITH YOUR ACTUAL FIREBASE CONFIG
 const firebaseConfig = {
-  apiKey: "AIzaSyDcddecfmYBa3AWGD2F61d5nZm_GIv4P0I",
-  authDomain: "coder-chatbot-31ee0.firebaseapp.com",
-  projectId: "coder-chatbot-31ee0",
-  storageBucket: "coder-chatbot-31ee0.firebasestorage.app",
-  messagingSenderId: "207253707963",
-  appId: "1:207253707963:web:3eb5f73b5537ea88bddd9e"
+  apiKey: "your api key",
+  authDomain: "your auth domain",
+  projectId: "your project id",
+  storageBucket: "your storage bucket",
+  messagingSenderId: "your id",
+  appId: "your app id"
 };
 
 const app = initializeApp(firebaseConfig);
