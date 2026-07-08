@@ -39,7 +39,8 @@ function App() {
 
   const fetchConversations = async (userId) => {
     try {
-      const res = await axios.get(`https://coder-chatbot.onrender.com/api/conversations/${userId}`);
+      const API_URL = import.meta.env.VITE_API_URL;
+      const res = await axios.get(`${API_URL}/api/conversations/${userId}`);
       if (res.data.length > 0) {
         setConversations(res.data);
         loadMessages(res.data[0].conversation_id);
