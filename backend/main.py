@@ -11,10 +11,13 @@ load_dotenv()
 
 app = FastAPI()
 
+origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
+origins = origins_str.split(",")
+
 # Allow React to talk to FastAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://coder-chatbot.vercel.app", "http://localhost:5173"], 
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
