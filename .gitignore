@@ -4,6 +4,7 @@
 .env
 .env.*
 *.local
+.firebase/
 
 # =========================
 # BACKEND (Python)
@@ -12,6 +13,8 @@ venv/
 env/
 __pycache__/
 *.pyc
+.pytest_cache/
+htmlcov/
 
 # =========================
 # FRONTEND (React/Vite)
@@ -26,6 +29,13 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # =========================
+# AI TOOLS & AGENTS (Clean Repo Bloat)
+# =========================
+.agents/
+agent/
+skills-lock.json
+
+# =========================
 # EDITOR & OS FILES
 # =========================
 .vscode/*
@@ -37,9 +47,3 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
-
-.env
-
-.agents/
-agent/
-skills-lock.json
