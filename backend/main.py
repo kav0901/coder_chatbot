@@ -163,6 +163,7 @@ async def chat_endpoint(
         return {"response": ai_reply}
 
     except Exception as e:
+        print(f"🚨 CHAT CRASH REASON: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()

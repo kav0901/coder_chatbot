@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -8,6 +8,10 @@ import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth, provider } from './firebase';
 import './App.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
+console.log("🚨 REACT THINKS THE URL IS:", API_BASE_URL);
+
 function App() {
   const [user, setUser] = useState(null);
 
@@ -16,10 +20,11 @@ function App() {
   const [input, setInput] = useState('');
   const [image, setImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef(null);
   const [conversations, setConversations] = useState([]);
   const [activeConvoId, setActiveConvoId] = useState(null);
 
-  // Edit State (NEW)
+  // Edit State
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
 
@@ -37,10 +42,14 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  // Auto-Scroll Hook
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const fetchConversations = async (userId) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL;
-      const res = await axios.get(`${API_URL}/api/conversations/${userId}`);
+      const res = await axios.get(`${API_BASE_URL}/api/conversations/${userId}`);
       if (res.data.length > 0) {
         setConversations(res.data);
         loadMessages(res.data[0].conversation_id);
@@ -57,7 +66,7 @@ function App() {
     const formData = new FormData();
     formData.append('user_id', targetUserId);
     try {
-      const res = await axios.post('http://127.0.0.1:8000/api/conversations', formData);
+      const res = await axios.post(`${API_BASE_URL}/api/conversations`, formData);
       setConversations((prev) => [res.data, ...prev]);
       setActiveConvoId(res.data.conversation_id);
       setMessages([]);
@@ -69,7 +78,7 @@ function App() {
   const loadMessages = async (convoId) => {
     setActiveConvoId(convoId);
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/messages/${convoId}`);
+      const res = await axios.get(`${API_BASE_URL}/api/messages/${convoId}`);
       setMessages(res.data);
     } catch (error) {
       console.error("Failed to load messages", error);
@@ -80,9 +89,9 @@ function App() {
     e.preventDefault();
     if ((!input.trim() && !image) || !activeConvoId) return;
 
+    setIsLoading(true);
     const userMessage = { sender: 'user', content: input, image: image ? URL.createObjectURL(image) : null };
     setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
 
     const formData = new FormData();
     formData.append('user_id', user.uid);
@@ -90,34 +99,32 @@ function App() {
     formData.append('message', input);
     if (image) formData.append('image', image);
 
+    // Clear inputs immediately for better UX
+    setInput('');
+    setImage(null);
+
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/chat', formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/chat`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-
-console.log("🚨 RAW DATA FROM PYTHON:", response.data.response);
-
+      // console.log("🚨 RAW DATA FROM PYTHON:", response.data.response);
       setMessages((prev) => [...prev, { sender: 'ai', content: response.data.response }]);
     } catch (error) {
       setMessages((prev) => [...prev, { sender: 'ai', content: "❌ Error connecting to server." }]);
     } finally {
-      setInput('');
-      setImage(null);
       setIsLoading(false);
     }
   };
 
-  // --- NEW: DELETE FUNCTION ---
   const handleDeleteChat = async (e, convoId) => {
-    e.stopPropagation(); // Prevents the sidebar item from being clicked when we hit delete
+    e.stopPropagation();
     if (!window.confirm("Are you sure you want to delete this chat?")) return;
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/conversations/${convoId}`);
+      await axios.delete(`${API_BASE_URL}/api/conversations/${convoId}`);
       const updatedConvos = conversations.filter(c => c.conversation_id !== convoId);
       setConversations(updatedConvos);
 
-      // If we deleted the chat we were actively looking at, load the next one
       if (activeConvoId === convoId) {
         if (updatedConvos.length > 0) {
           loadMessages(updatedConvos[0].conversation_id);
@@ -131,7 +138,6 @@ console.log("🚨 RAW DATA FROM PYTHON:", response.data.response);
     }
   };
 
-  // --- NEW: RENAME FUNCTIONS ---
   const handleRenameClick = (e, convo) => {
     e.stopPropagation();
     setEditingId(convo.conversation_id);
@@ -145,8 +151,7 @@ console.log("🚨 RAW DATA FROM PYTHON:", response.data.response);
     try {
       const formData = new FormData();
       formData.append('title', editTitle);
-      await axios.put(`http://127.0.0.1:8000/api/conversations/${convoId}`, formData);
-
+      await axios.put(`${API_BASE_URL}/api/conversations/${convoId}`, formData);
       setConversations(conversations.map(c =>
         c.conversation_id === convoId ? { ...c, title: editTitle } : c
       ));
@@ -203,7 +208,6 @@ console.log("🚨 RAW DATA FROM PYTHON:", response.data.response);
               onClick={() => loadMessages(convo.conversation_id)}
             >
               {editingId === convo.conversation_id ? (
-                // IF WE ARE EDITING THIS CHAT, SHOW A TEXT INPUT
                 <form onSubmit={(e) => handleRenameSubmit(e, convo.conversation_id)} className="rename-form">
                   <input
                     type="text"
@@ -211,11 +215,10 @@ console.log("🚨 RAW DATA FROM PYTHON:", response.data.response);
                     onChange={(e) => setEditTitle(e.target.value)}
                     autoFocus
                     onClick={(e) => e.stopPropagation()}
-                    onBlur={(e) => handleRenameSubmit(e, convo.conversation_id)} // Saves when you click away
+                    onBlur={(e) => handleRenameSubmit(e, convo.conversation_id)}
                   />
                 </form>
               ) : (
-                // DEFAULT VIEW: SHOW TITLE AND HIDDEN BUTTONS
                 <>
                   <span className="convo-title">💬 {convo.title}</span>
                   <div className="convo-actions">
@@ -233,23 +236,23 @@ console.log("🚨 RAW DATA FROM PYTHON:", response.data.response);
         <header>
           <h1>AI Coding Assistant</h1>
         </header>
-<div className="chat-window">
+        
+        <div className="chat-window">
           {messages.length === 0 ? (
             <div className="empty-state">Start a new conversation...</div>
           ) : (
             messages.map((msg, index) => (
               <div key={index} className={`message-bubble ${msg.sender}`}>
                 {msg.image && <img src={msg.image} alt="uploaded" className="image-preview" />}
-            <ReactMarkdown
+                
+                {/* Markdown Renderer */}
+                <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   children={msg.content}
                   components={{
-                    // 1. Swap <p> for <div> to prevent hydration crashes
                     p({ node, children, ...props }) {
                       return <div style={{ marginBottom: '10px' }} {...props}>{children}</div>;
                     },
-                    
-                    // 2. The Code Block Logic
                     code({ node, inline, className, children, ...props }) {
                       const match = /language-(\w+)/.exec(className || "");
                       const codeString = String(children).replace(/\n$/, "");
@@ -269,7 +272,6 @@ console.log("🚨 RAW DATA FROM PYTHON:", response.data.response);
                               borderRadius: "6px",
                               padding: "12px",
                             }}
-                            // 🚨 THE SILVER BULLET: This forces the HIDDEN INNER TAG to respect line breaks!
                             codeTagProps={{
                               style: {
                                 whiteSpace: "pre-wrap",
@@ -281,7 +283,6 @@ console.log("🚨 RAW DATA FROM PYTHON:", response.data.response);
                         );
                       }
 
-                      // 3. Normal, small inline text
                       return (
                         <code className="inline-code" {...props}>
                           {children}
@@ -293,8 +294,13 @@ console.log("🚨 RAW DATA FROM PYTHON:", response.data.response);
               </div>
             ))
           )}
+          
           {isLoading && <div className="loading">AI is typing...</div>}
+          
+          {/* THE MISSING PIECE: The Auto-Scroll Anchor */}
+          <div ref={messagesEndRef} />
         </div>
+
         <form onSubmit={handleSend} className="input-area">
           <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} className="file-input" />
           <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask a coding question..." className="text-input" />

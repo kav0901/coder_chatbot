@@ -37,3 +37,9 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+.env
+
+.agents/
+agent/
+skills-lock.json
