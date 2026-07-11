@@ -417,3 +417,13 @@ header {
   border-radius: 4px;
   font-family: monospace;
 }
+.typing-indicator {
+  font-style: italic;
+  color: #888;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
